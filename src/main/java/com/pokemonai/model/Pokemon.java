@@ -32,6 +32,7 @@ public class Pokemon {
         this.status = status;
     }
 
+    public List<Move> getMoveList() { return this.moveList; }
     public int getCurrentHP() {
         return this.currentHP;
     }
