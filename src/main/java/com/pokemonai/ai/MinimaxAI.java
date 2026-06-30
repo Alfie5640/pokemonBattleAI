@@ -14,42 +14,50 @@ public class MinimaxAI implements AIStrategy{
         Move bestMove = null;
         int bestScore = Integer.MIN_VALUE;
         int depth = 3;
+        int alpha = Integer.MIN_VALUE;
+        int beta = Integer.MAX_VALUE;
         boolean isMaximizing = true;
 
-        for (int i = 0; i < moveList.size(); i++) {
-            BattleState nextState = state.applyMove(moveList.get(i));
-            int score = minimax(nextState, depth, !(isMaximizing));
+        for (Move move : moveList) {
+            BattleState nextState = state.applyMove(move);
+            int score = minimax(nextState, depth, !(isMaximizing), alpha, beta);
 
             if (score > bestScore) {
                 bestScore = score;
-                bestMove = moveList.get(i);
+                bestMove = move;
+                alpha = score;
             }
         }
         return bestMove;
     }
 
-    private int minimax(BattleState state, int depth, boolean isMaximizing) {
+    private int minimax(BattleState state, int depth, boolean isMaximizing, int alpha, int beta) {
         if (depth == 0 || state.getTrainerPokemon().isFainted() || state.getOpponentPokemon().isFainted()) {
             return Heuristic.evaluateState(state);
         }
 
+        int best;
+        List<Move> moveList;
         if (isMaximizing) {
-            int best = Integer.MIN_VALUE;
-            List<Move> moveList = state.getTrainerPokemon().getMoveList();
+            best = Integer.MIN_VALUE;
+            moveList = state.getTrainerPokemon().getMoveList();
             for (Move move : moveList) {
-                int score = minimax(state.applyMove(move), depth - 1, false);
+                int score = minimax(state.applyMove(move), depth - 1, false, alpha, beta);
                 best = Math.max(best, score);
+                alpha = Math.max(alpha, best);
+                if (beta <= alpha) { break; }
             }
-            return best;
         } else {
-            int best = Integer.MAX_VALUE;
-            List<Move> moveList = state.getOpponentPokemon().getMoveList();
+            best = Integer.MAX_VALUE;
+            moveList = state.getOpponentPokemon().getMoveList();
             for (Move move : moveList) {
-                int score = minimax(state.applyMove(move), depth - 1, true);
+                int score = minimax(state.applyMove(move), depth - 1, true, alpha, beta);
                 best = Math.min(best, score);
+                beta = Math.min(beta, best);
+                if (beta <= alpha) { break; }
             }
-            return best;
         }
+        return best;
     }
 
 }
