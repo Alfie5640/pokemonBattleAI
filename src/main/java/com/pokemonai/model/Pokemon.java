@@ -14,7 +14,7 @@ public class Pokemon {
     List<Move> moveList;
     int level;
     StatusCondition status;
-    Map<Stat, Integer> statStages; //maybe we want an enum of stats instead so we can have Map<Stat, Integer>
+    Map<Stat, Integer> statStages;
 
     public Pokemon(String name, Type type1, Type type2, StatBlock baseStats, List<Move> moveList, int level, Map<Stat, Integer> statStages) {
         this(name, type1, type2, baseStats, baseStats.hp(), moveList, level, statStages, StatusCondition.NONE);
@@ -30,6 +30,14 @@ public class Pokemon {
         this.level = level;
         this.statStages = statStages;
         this.status = status;
+    }
+
+    public int getCurrentHP() {
+        return this.currentHP;
+    }
+
+    public StatBlock getBaseStats() {
+        return this.baseStats;
     }
 
     //Return new Pokemon to maintain immutability for AI strategies

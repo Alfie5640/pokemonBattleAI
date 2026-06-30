@@ -1,4 +1,4 @@
 package com.pokemonai.ai;
 
-public class ExpectimaxAI implements AIStrategy{
+public abstract class ExpectimaxAI implements AIStrategy{
 }
