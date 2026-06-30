@@ -32,7 +32,7 @@ public class Pokemon {
         this.status = status;
     }
 
-    //Return new Pokemon to maintain immutability for AI
+    //Return new Pokemon to maintain immutability for AI strategies
     public Pokemon takeDamage(int amount) {
         return new Pokemon(name, type1, type2, baseStats, (currentHP-amount), moveList, level, statStages, status);
     }
