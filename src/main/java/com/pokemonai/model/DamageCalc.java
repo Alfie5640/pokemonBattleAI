@@ -7,28 +7,76 @@ public class DamageCalc {
         double baseDmg;
         double STAB = 1;
         double roll = ((Math.random() * (1.0 - 0.85)) + 0.85);
+        double hitChance = (Math.random() * 100);
+        double critChance = Math.random();
+        boolean crit = false;
+        double totalDmg;
 
-        if(move.category() == MoveCategory.PHYSICAL) {
+        if (move.accuracy() < hitChance) {
+            return 0; //can print no effect / missed
+        }
+
+        if (critChance < 0.0625) {
+            crit = true;
+        }
+
+        if (move.category() == MoveCategory.PHYSICAL) {
             atkStat = attacker.baseStats.atk();
             defStat = defender.baseStats.def();
-        } else if(move.category() == MoveCategory.SPECIAL) {
+        } else if (move.category() == MoveCategory.SPECIAL) {
             atkStat = attacker.baseStats.spAtk();
             defStat = defender.baseStats.spDef();
         } else {
             return 0;
         }
 
-        baseDmg = ((2 * (double)attacker.level / 5 + 2) * move.basePower() * (double)atkStat / (double)defStat) / 50 + 2;
+        baseDmg = ((2 * (double) attacker.level / 5 + 2) * move.basePower() * (double) atkStat / (double) defStat) / 50 + 2;
         double effectiveness = move.type().calculateEffectiveness(defender.type1);
         if (defender.type2 != null) {
             effectiveness *= move.type().calculateEffectiveness(defender.type2);
         }
 
-        if ((attacker.type1 == move.type()|| attacker.type2 == move.type())) {
+        if ((attacker.type1 == move.type() || attacker.type2 == move.type())) {
             STAB = 1.5;
         }
 
-
-        return baseDmg * effectiveness * STAB * roll;
+        totalDmg = baseDmg * effectiveness * STAB * roll;
+        if (crit) {
+            totalDmg *= 1.5;
+        }
+        return totalDmg;
     }
+
+
+    public static double calculateExpectedDamage(Move move, Pokemon attacker, Pokemon defender) {
+        int atkStat;
+        int defStat;
+        double baseDmg;
+        double STAB = 1;
+        double expectedDmg;
+
+        if (move.category() == MoveCategory.PHYSICAL) {
+            atkStat = attacker.baseStats.atk();
+            defStat = defender.baseStats.def();
+        } else if (move.category() == MoveCategory.SPECIAL) {
+            atkStat = attacker.baseStats.spAtk();
+            defStat = defender.baseStats.spDef();
+        } else {
+            return 0;
+        }
+
+        baseDmg = ((2 * (double) attacker.level / 5 + 2) * move.basePower() * (double) atkStat / (double) defStat) / 50 + 2;
+        double effectiveness = move.type().calculateEffectiveness(defender.type1);
+        if (defender.type2 != null) {
+            effectiveness *= move.type().calculateEffectiveness(defender.type2);
+        }
+
+        if ((attacker.type1 == move.type() || attacker.type2 == move.type())) {
+            STAB = 1.5;
+        }
+
+        expectedDmg = baseDmg * effectiveness * STAB * 0.925 * 1.03125 * ((double)move.accuracy() / 100.0);
+        return expectedDmg;
+    }
+
 }
