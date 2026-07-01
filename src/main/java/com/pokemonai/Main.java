@@ -13,22 +13,18 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
 
-        // --- Moves ---
         Move tackle      = new Move("Tackle",       Type.NORMAL,   40, 100, 0, StatusCondition.NONE,     MoveCategory.PHYSICAL, 0);
-        Move ember       = new Move("Ember",        Type.FIRE,     40, 100, 0, StatusCondition.BURN,     MoveCategory.SPECIAL,  10);
+        Move ember       = new Move("Ember",        Type.FIRE,     40, 100, 0, StatusCondition.BURN,     MoveCategory.SPECIAL,  50);
         Move waterGun    = new Move("Water Gun",    Type.WATER,    40, 100, 0, StatusCondition.NONE,     MoveCategory.SPECIAL,  0);
         Move bite        = new Move("Bite",         Type.DARK,     60, 100, 0, StatusCondition.NONE,     MoveCategory.PHYSICAL, 0);
         Move thunderWave = new Move("Thunder Wave", Type.ELECTRIC,  0, 100, 0, StatusCondition.PARALYZE, MoveCategory.STATUS,   100);
         Move poisonPowder= new Move("Poison Powder",Type.POISON,    0,  75, 0, StatusCondition.POISON,   MoveCategory.STATUS,   100);
 
-        // --- Stats ---
         StatBlock charmanderStats = new StatBlock(100, 60, 50, 65, 50, 50);
         StatBlock squirtleStats   = new StatBlock(100, 48, 65, 43, 50, 64);
 
-        // --- Empty stat stages ---
         Map<Stat, Integer> emptyStages = new HashMap<>();
 
-        // --- Pokemon ---
         Pokemon charmander = new Pokemon(
                 "Charmander", Type.FIRE, null, charmanderStats,
                 List.of(tackle, ember, thunderWave, poisonPowder), 50, emptyStages
@@ -39,7 +35,6 @@ public class Main {
                 List.of(waterGun, bite, thunderWave, poisonPowder), 50, emptyStages
         );
 
-        // --- Mode select ---
         Scanner scanner = new Scanner(System.in);
         System.out.println("=== Pokemon Battle AI ===");
         System.out.println("Select mode:");

@@ -18,7 +18,7 @@ public class ExpectimaxAI implements AIStrategy {
             double hitProb  = (double) move.accuracy() / 100.0;
             double missProb = 1 - hitProb;
 
-            double hitScore  = expectimax(state.applyMove(move), depth - 1, false);
+            double hitScore  = expectimax(state.applyMoveForSearch(move), depth - 1, false);
             double missScore = expectimax(state,                 depth - 1, false);
 
             double chanceScore = (hitProb * hitScore) + (missProb * missScore);
@@ -44,7 +44,7 @@ public class ExpectimaxAI implements AIStrategy {
                 double hitProb  = (double) move.accuracy() / 100.0;
                 double missProb = 1 - hitProb;
 
-                double hitScore  = expectimax(state.applyMove(move), depth - 1, false);
+                double hitScore  = expectimax(state.applyMoveForSearch(move), depth - 1, false);
                 double missScore = expectimax(state,                 depth - 1, false);
 
                 double chanceScore = (hitProb * hitScore) + (missProb * missScore);
@@ -58,7 +58,7 @@ public class ExpectimaxAI implements AIStrategy {
                 double hitProb  = (double) move.accuracy() / 100.0;
                 double missProb = 1 - hitProb;
 
-                double hitScore  = expectimax(state.applyMove(move), depth - 1, true);
+                double hitScore  = expectimax(state.applyMoveForSearch(move), depth - 1, true);
                 double missScore = expectimax(state,                 depth - 1, true);
 
                 double chanceScore = (hitProb * hitScore) + (missProb * missScore);

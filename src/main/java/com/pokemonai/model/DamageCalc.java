@@ -1,7 +1,7 @@
 package com.pokemonai.model;
 
 public class DamageCalc {
-    public static double calculateDamage(Move move, Pokemon attacker, Pokemon defender) {
+    public static DamageResult calculateDamage(Move move, Pokemon attacker, Pokemon defender) {
         int atkStat;
         int defStat;
         double baseDmg;
@@ -13,7 +13,7 @@ public class DamageCalc {
         double totalDmg;
 
         if (move.accuracy() < hitChance) {
-            return 0; //can print no effect / missed
+            return new DamageResult(0, 1.0, false); //can print no effect / missed
         }
 
         if (critChance < 0.0625) {
@@ -28,7 +28,7 @@ public class DamageCalc {
             atkStat = attacker.baseStats.spAtk();
             defStat = defender.baseStats.spDef();
         } else {
-            return 0;
+            return new DamageResult(0, 1.0, false);
         }
 
         baseDmg = ((2 * (double) attacker.level / 5 + 2) * move.basePower() * (double) atkStat / (double) defStat) / 50 + 2;
@@ -45,6 +45,6 @@ public class DamageCalc {
         if (crit) {
             totalDmg *= 1.5;
         }
-        return totalDmg;
+        return new DamageResult((int)Math.round(totalDmg), effectiveness, crit);
     }
 }

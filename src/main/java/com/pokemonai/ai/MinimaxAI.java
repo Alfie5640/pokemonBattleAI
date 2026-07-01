@@ -19,7 +19,7 @@ public class MinimaxAI implements AIStrategy{
         boolean isMaximizing = true;
 
         for (Move move : moveList) {
-            BattleState nextState = state.applyMove(move);
+            BattleState nextState = state.applyMoveForSearch(move);
             int score = minimax(nextState, depth, !(isMaximizing), alpha, beta);
 
             if (score > bestScore) {
@@ -42,7 +42,7 @@ public class MinimaxAI implements AIStrategy{
             best = Integer.MIN_VALUE;
             moveList = state.getTrainerPokemon().getMoveList();
             for (Move move : moveList) {
-                int score = minimax(state.applyMove(move), depth - 1, false, alpha, beta);
+                int score = minimax(state.applyMoveForSearch(move), depth - 1, false, alpha, beta);
                 best = Math.max(best, score);
                 alpha = Math.max(alpha, best);
                 if (beta <= alpha) { break; }
@@ -51,7 +51,7 @@ public class MinimaxAI implements AIStrategy{
             best = Integer.MAX_VALUE;
             moveList = state.getOpponentPokemon().getMoveList();
             for (Move move : moveList) {
-                int score = minimax(state.applyMove(move), depth - 1, true, alpha, beta);
+                int score = minimax(state.applyMoveForSearch(move), depth - 1, true, alpha, beta);
                 best = Math.min(best, score);
                 beta = Math.min(beta, best);
                 if (beta <= alpha) { break; }

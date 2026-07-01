@@ -1,13 +1,8 @@
 package com.pokemonai.engine;
 
 import com.pokemonai.ai.AIStrategy;
-import com.pokemonai.model.BattleState;
-import com.pokemonai.model.Move;
-import com.pokemonai.model.Pokemon;
-import com.pokemonai.model.StatusCondition;
+import com.pokemonai.model.*;
 
-// Runs the turn loop. Collects actions from both sides, resolves order
-// via priority then speed, applies moves, checks win condition
 public class BattleEngine {
 
     public void runBattle(BattleState state, AIStrategy side1, AIStrategy side2) {
@@ -46,11 +41,12 @@ public class BattleEngine {
                 Pokemon defenderBefore = trainerGoesFirst
                         ? state.getOpponentPokemon()
                         : state.getTrainerPokemon();
-                state = state.applyMove(first);
-                Pokemon defenderAfter = trainerGoesFirst
-                        ? state.getOpponentPokemon()
-                        : state.getTrainerPokemon();
-                printStatusIfInflicted(defenderBefore, defenderAfter);
+
+                MoveOutcome outcome = state.applyMove(first);
+                state = outcome.newState();
+                DamageResult result = outcome.damageResult();
+
+                printMoveEffects(first, defenderBefore, state, result, trainerGoesFirst);
             } else {
                 System.out.println("  " + firstAttacker.getName() + " is "
                         + firstAttacker.getStatus().toString().toLowerCase() + " and can't move!");
@@ -73,11 +69,12 @@ public class BattleEngine {
                 Pokemon defenderBefore = trainerGoesFirst
                         ? state.getTrainerPokemon()
                         : state.getOpponentPokemon();
-                state = state.applyMove(second);
-                Pokemon defenderAfter = trainerGoesFirst
-                        ? state.getTrainerPokemon()
-                        : state.getOpponentPokemon();
-                printStatusIfInflicted(defenderBefore, defenderAfter);
+
+                MoveOutcome outcome = state.applyMove(second);
+                state = outcome.newState();
+                DamageResult result = outcome.damageResult();
+
+                printMoveEffects(second, defenderBefore, state, result, !trainerGoesFirst);
             } else {
                 System.out.println("  " + secondAttacker.getName() + " is "
                         + secondAttacker.getStatus().toString().toLowerCase() + " and can't move!");
@@ -97,7 +94,6 @@ public class BattleEngine {
             System.out.println();
         }
 
-        // Print winner
         System.out.println("///////// Battle Over //////////");
         if (state.getTrainerPokemon().isFainted()) {
             System.out.println(state.getOpponentPokemon().getName() + " wins");
@@ -106,7 +102,37 @@ public class BattleEngine {
         }
     }
 
-    // Prints status infliction message only when status actually changed
+    private void printMoveEffects(Move move, Pokemon defenderBefore,
+                                  BattleState stateAfter, DamageResult result,
+                                  boolean attackerIsTrainer) {
+        // Miss
+        if (result.damage() == 0 && move.basePower() > 0) {
+            System.out.println("  " + move.name() + " missed!");
+            return;
+        }
+
+        // Crit
+        if (result.wasCrit()) {
+            System.out.println("  A critical hit!");
+        }
+
+        // Type effectiveness
+        double eff = result.effectiveness();
+        if (eff == 0.0) {
+            System.out.println("  It doesn't affect " + defenderBefore.getName() + "...");
+        } else if (eff > 1.0) {
+            System.out.println("  It's super effective!");
+        } else if (eff < 1.0) {
+            System.out.println("  It's not very effective...");
+        }
+
+        // Status infliction
+        Pokemon defenderAfter = attackerIsTrainer
+                ? stateAfter.getOpponentPokemon()
+                : stateAfter.getTrainerPokemon();
+        printStatusIfInflicted(defenderBefore, defenderAfter);
+    }
+
     private void printStatusIfInflicted(Pokemon defenderBefore, Pokemon defenderAfter) {
         if (defenderAfter.getStatus() != StatusCondition.NONE
                 && defenderAfter.getStatus() != defenderBefore.getStatus()) {
@@ -115,7 +141,6 @@ public class BattleEngine {
         }
     }
 
-    // Attempts to clear sleep/freeze before a Pokemon moves
     private BattleState tryStatusRecovery(BattleState state, boolean isTrainerSide) {
         Pokemon pokemon = isTrainerSide
                 ? state.getTrainerPokemon()
@@ -132,7 +157,6 @@ public class BattleEngine {
         }
     }
 
-    // Returns Pokemon with status cleared if wake/thaw roll succeeds
     private Pokemon tryWakeOrThaw(Pokemon pokemon) {
         return switch (pokemon.getStatus()) {
             case SLEEP -> {
@@ -153,7 +177,6 @@ public class BattleEngine {
         };
     }
 
-    // Returns true if the Pokemon can act this turn
     private boolean canMove(Pokemon pokemon) {
         return switch (pokemon.getStatus()) {
             case SLEEP, FREEZE -> false;
