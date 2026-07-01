@@ -2,16 +2,15 @@ package com.pokemonai;
 
 import com.pokemonai.ai.ExpectimaxAI;
 import com.pokemonai.ai.MinimaxAI;
+import com.pokemonai.ai.MCTSAI;
 import com.pokemonai.engine.BattleEngine;
 import com.pokemonai.model.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) {
+    static void main() {
 
         Move tackle      = new Move("Tackle",       Type.NORMAL,   40, 100, 0, StatusCondition.NONE,     MoveCategory.PHYSICAL, 0);
         Move ember       = new Move("Ember",        Type.FIRE,     40, 100, 0, StatusCondition.BURN,     MoveCategory.SPECIAL,  50);
@@ -23,24 +22,17 @@ public class Main {
         StatBlock charmanderStats = new StatBlock(100, 60, 50, 65, 50, 50);
         StatBlock squirtleStats   = new StatBlock(100, 48, 65, 43, 50, 64);
 
-        Map<Stat, Integer> emptyStages = new HashMap<>();
-
-        Pokemon charmander = new Pokemon(
-                "Charmander", Type.FIRE, null, charmanderStats,
-                List.of(tackle, ember, thunderWave, poisonPowder), 50, emptyStages
-        );
-
-        Pokemon squirtle = new Pokemon(
-                "Squirtle", Type.WATER, null, squirtleStats,
-                List.of(waterGun, bite, thunderWave, poisonPowder), 50, emptyStages
-        );
+        Pokemon charmander = new Pokemon("Charmander", Type.FIRE, null, charmanderStats, List.of(tackle, ember, thunderWave, poisonPowder), 50);
+        Pokemon squirtle = new Pokemon("Squirtle", Type.WATER, null, squirtleStats, List.of(waterGun, bite, thunderWave, poisonPowder), 50);
 
         Scanner scanner = new Scanner(System.in);
-        System.out.println("=== Pokemon Battle AI ===");
         System.out.println("Select mode:");
         System.out.println("  1. MinimaxAI vs MinimaxAI");
         System.out.println("  2. MinimaxAI vs ExpectimaxAI");
         System.out.println("  3. ExpectimaxAI vs ExpectimaxAI");
+        System.out.println("  4. MCTSAI vs MCTSAI");
+        System.out.println("  5. MinimaxAI vs MCTSAI");
+        System.out.println("  6. ExpectimaxAI vs MCTSAI");
         System.out.print("Enter choice: ");
 
         int choice = scanner.nextInt();
@@ -50,18 +42,37 @@ public class Main {
         BattleEngine engine = new BattleEngine();
 
         switch (choice) {
+
             case 1 -> {
                 System.out.println("\nMinimaxAI vs MinimaxAI");
-                engine.runBattle(state, new MinimaxAI(), new MinimaxAI());
+                engine.runBattleVerbose(state, new MinimaxAI(), new MinimaxAI());
             }
+
             case 2 -> {
                 System.out.println("\nMinimaxAI vs ExpectimaxAI");
-                engine.runBattle(state, new MinimaxAI(), new ExpectimaxAI());
+                engine.runBattleVerbose(state, new MinimaxAI(), new ExpectimaxAI());
             }
+
             case 3 -> {
                 System.out.println("\nExpectimaxAI vs ExpectimaxAI");
-                engine.runBattle(state, new ExpectimaxAI(), new ExpectimaxAI());
+                engine.runBattleVerbose(state, new ExpectimaxAI(), new ExpectimaxAI());
             }
+
+            case 4 -> {
+                System.out.println("\nMCTSAI vs MCTSAI");
+                engine.runBattleVerbose(state, new MCTSAI(), new MCTSAI());
+            }
+
+            case 5 -> {
+                System.out.println("\nMinimaxAI vs MCTSAI");
+                engine.runBattleVerbose(state, new MinimaxAI(), new MCTSAI());
+            }
+
+            case 6 -> {
+                System.out.println("\nExpectimaxAI vs MCTSAI");
+                engine.runBattleVerbose(state, new ExpectimaxAI(), new MCTSAI());
+            }
+
             default -> System.out.println("Invalid choice.");
         }
     }

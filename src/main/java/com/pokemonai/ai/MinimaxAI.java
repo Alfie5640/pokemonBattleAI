@@ -5,29 +5,30 @@ import com.pokemonai.model.Move;
 
 import java.util.List;
 
-// Implements AIStrategy. Searches game tree assuming perfect opponent. (alpha beta pruning also)
-// Maybe a hashmap of score to move? or something
-public class MinimaxAI implements AIStrategy{
+public class MinimaxAI implements AIStrategy {
 
     @Override
     public Move makeDecision(BattleState state, List<Move> moveList) {
+
         Move bestMove = null;
         int bestScore = Integer.MIN_VALUE;
+
         int depth = 3;
         int alpha = Integer.MIN_VALUE;
         int beta = Integer.MAX_VALUE;
-        boolean isMaximizing = true;
 
         for (Move move : moveList) {
+
             BattleState nextState = state.applyMoveForSearch(move);
-            int score = minimax(nextState, depth, !(isMaximizing), alpha, beta);
+            int score = minimax(nextState, depth - 1, false, alpha, beta);
 
             if (score > bestScore) {
                 bestScore = score;
                 bestMove = move;
-                alpha = score;
+                alpha = bestScore;
             }
         }
+
         return bestMove;
     }
 
@@ -36,28 +37,41 @@ public class MinimaxAI implements AIStrategy{
             return Heuristic.evaluateState(state);
         }
 
-        int best;
         List<Move> moveList;
+
         if (isMaximizing) {
-            best = Integer.MIN_VALUE;
+
+            int best = Integer.MIN_VALUE;
             moveList = state.getTrainerPokemon().getMoveList();
+
             for (Move move : moveList) {
-                int score = minimax(state.applyMoveForSearch(move), depth - 1, false, alpha, beta);
+                BattleState nextState = state.applyMoveForSearch(move);
+                int score = minimax(nextState, depth - 1, false, alpha, beta);
+
                 best = Math.max(best, score);
                 alpha = Math.max(alpha, best);
-                if (beta <= alpha) { break; }
+
+                if (beta <= alpha) break;
             }
+
+            return best;
+
         } else {
-            best = Integer.MAX_VALUE;
+
+            int best = Integer.MAX_VALUE;
             moveList = state.getOpponentPokemon().getMoveList();
+
             for (Move move : moveList) {
-                int score = minimax(state.applyMoveForSearch(move), depth - 1, true, alpha, beta);
+                BattleState nextState = state.applyMoveForSearch(move);
+                int score = minimax(nextState, depth - 1, true, alpha, beta);
+
                 best = Math.min(best, score);
                 beta = Math.min(beta, best);
-                if (beta <= alpha) { break; }
-            }
-        }
-        return best;
-    }
 
+                if (beta <= alpha) break;
+            }
+
+            return best;
+        }
+    }
 }
