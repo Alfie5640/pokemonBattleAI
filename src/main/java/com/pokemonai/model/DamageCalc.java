@@ -22,6 +22,7 @@ public class DamageCalc {
 
         if (move.category() == MoveCategory.PHYSICAL) {
             atkStat = attacker.baseStats.atk();
+            if (attacker.getStatus() == StatusCondition.BURN) {atkStat = atkStat / 2;}
             defStat = defender.baseStats.def();
         } else if (move.category() == MoveCategory.SPECIAL) {
             atkStat = attacker.baseStats.spAtk();
@@ -46,37 +47,4 @@ public class DamageCalc {
         }
         return totalDmg;
     }
-
-
-    public static double calculateExpectedDamage(Move move, Pokemon attacker, Pokemon defender) {
-        int atkStat;
-        int defStat;
-        double baseDmg;
-        double STAB = 1;
-        double expectedDmg;
-
-        if (move.category() == MoveCategory.PHYSICAL) {
-            atkStat = attacker.baseStats.atk();
-            defStat = defender.baseStats.def();
-        } else if (move.category() == MoveCategory.SPECIAL) {
-            atkStat = attacker.baseStats.spAtk();
-            defStat = defender.baseStats.spDef();
-        } else {
-            return 0;
-        }
-
-        baseDmg = ((2 * (double) attacker.level / 5 + 2) * move.basePower() * (double) atkStat / (double) defStat) / 50 + 2;
-        double effectiveness = move.type().calculateEffectiveness(defender.type1);
-        if (defender.type2 != null) {
-            effectiveness *= move.type().calculateEffectiveness(defender.type2);
-        }
-
-        if ((attacker.type1 == move.type() || attacker.type2 == move.type())) {
-            STAB = 1.5;
-        }
-
-        expectedDmg = baseDmg * effectiveness * STAB * 0.925 * 1.03125 * ((double)move.accuracy() / 100.0);
-        return expectedDmg;
-    }
-
 }

@@ -22,12 +22,19 @@ public class BattleState {
         return this.opponentPokemon;
     }
 
+    public int getTurnNumber()    { return this.turnNumber; }
+    public boolean isTrainersTurn() { return this.isTrainersTurn; }
+
     public BattleState applyMove(Move chosenMove) {
         Pokemon attacker = isTrainersTurn ? trainerPokemon : opponentPokemon;
         Pokemon defender = isTrainersTurn ? opponentPokemon : trainerPokemon;
+        double statusRoll = Math.random() * 100;
 
         int damage = (int) Math.round(DamageCalc.calculateDamage(chosenMove, attacker, defender));
-        Pokemon updatedDefender = defender.takeDamage(damage).applyStatusCondition(chosenMove.inflicts());
+        Pokemon updatedDefender = defender.takeDamage(damage);
+        if (statusRoll < chosenMove.statusChance() && chosenMove.statusChance() > 0) {
+            updatedDefender = updatedDefender.applyStatusCondition(chosenMove.inflicts());
+        }
 
         if (isTrainersTurn) {
             return new BattleState(trainerPokemon, updatedDefender, turnNumber + 1, false);

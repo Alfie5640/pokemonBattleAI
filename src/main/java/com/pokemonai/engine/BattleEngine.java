@@ -4,7 +4,10 @@ import com.pokemonai.ai.AIStrategy;
 import com.pokemonai.model.BattleState;
 import com.pokemonai.model.Move;
 import com.pokemonai.model.Pokemon;
+import com.pokemonai.model.StatusCondition;
 
+// Runs the turn loop. Collects actions from both sides, resolves order
+// via priority then speed, applies moves, checks win condition
 public class BattleEngine {
 
     public void runBattle(BattleState state, AIStrategy side1, AIStrategy side2) {
@@ -23,23 +26,71 @@ public class BattleEngine {
             if (side1Move.priority() != side2Move.priority()) {
                 trainerGoesFirst = side1Move.priority() > side2Move.priority();
             } else {
-                trainerGoesFirst = state.getTrainerPokemon().getBaseStats().speed() > state.getOpponentPokemon().getBaseStats().speed();
+                trainerGoesFirst = state.getTrainerPokemon().getBaseStats().speed()
+                        > state.getOpponentPokemon().getBaseStats().speed();
             }
 
             first  = trainerGoesFirst ? side1Move : side2Move;
             second = trainerGoesFirst ? side2Move : side1Move;
 
+            // Try wake/thaw before first move
+            state = tryStatusRecovery(state, trainerGoesFirst);
+
             // Apply first move
-            System.out.println((trainerGoesFirst ? state.getTrainerPokemon().getName() : state.getOpponentPokemon().getName()) + " used " + first.name() + "!");
-            state = state.applyMove(first);
-            System.out.println("  Trainer HP: " + state.getTrainerPokemon().getCurrentHP() + " | Opponent HP: " + state.getOpponentPokemon().getCurrentHP());
+            Pokemon firstAttacker = trainerGoesFirst
+                    ? state.getTrainerPokemon()
+                    : state.getOpponentPokemon();
+
+            System.out.println(firstAttacker.getName() + " used " + first.name() + "!");
+            if (canMove(firstAttacker)) {
+                Pokemon defenderBefore = trainerGoesFirst
+                        ? state.getOpponentPokemon()
+                        : state.getTrainerPokemon();
+                state = state.applyMove(first);
+                Pokemon defenderAfter = trainerGoesFirst
+                        ? state.getOpponentPokemon()
+                        : state.getTrainerPokemon();
+                printStatusIfInflicted(defenderBefore, defenderAfter);
+            } else {
+                System.out.println("  " + firstAttacker.getName() + " is "
+                        + firstAttacker.getStatus().toString().toLowerCase() + " and can't move!");
+            }
+            System.out.println("  Trainer HP: " + state.getTrainerPokemon().getCurrentHP()
+                    + " | Opponent HP: " + state.getOpponentPokemon().getCurrentHP());
 
             if (pokemonFainted(state.getTrainerPokemon(), state.getOpponentPokemon())) break;
 
+            // Try wake/thaw before second move
+            state = tryStatusRecovery(state, !trainerGoesFirst);
+
             // Apply second move
-            System.out.println((!trainerGoesFirst ? state.getTrainerPokemon().getName() : state.getOpponentPokemon().getName()) + " used " + second.name() + "!");
-            state = state.applyMove(second);
-            System.out.println("  Trainer HP: " + state.getTrainerPokemon().getCurrentHP() + " | Opponent HP: " + state.getOpponentPokemon().getCurrentHP());
+            Pokemon secondAttacker = trainerGoesFirst
+                    ? state.getOpponentPokemon()
+                    : state.getTrainerPokemon();
+
+            System.out.println(secondAttacker.getName() + " used " + second.name() + "!");
+            if (canMove(secondAttacker)) {
+                Pokemon defenderBefore = trainerGoesFirst
+                        ? state.getTrainerPokemon()
+                        : state.getOpponentPokemon();
+                state = state.applyMove(second);
+                Pokemon defenderAfter = trainerGoesFirst
+                        ? state.getTrainerPokemon()
+                        : state.getOpponentPokemon();
+                printStatusIfInflicted(defenderBefore, defenderAfter);
+            } else {
+                System.out.println("  " + secondAttacker.getName() + " is "
+                        + secondAttacker.getStatus().toString().toLowerCase() + " and can't move!");
+            }
+            System.out.println("  Trainer HP: " + state.getTrainerPokemon().getCurrentHP()
+                    + " | Opponent HP: " + state.getOpponentPokemon().getCurrentHP());
+
+            if (pokemonFainted(state.getTrainerPokemon(), state.getOpponentPokemon())) break;
+
+            // End of turn effects
+            state = applyEndOfTurn(state);
+            System.out.println("  [EOT] Trainer HP: " + state.getTrainerPokemon().getCurrentHP()
+                    + " | Opponent HP: " + state.getOpponentPokemon().getCurrentHP());
 
             if (pokemonFainted(state.getTrainerPokemon(), state.getOpponentPokemon())) break;
 
@@ -53,6 +104,83 @@ public class BattleEngine {
         } else {
             System.out.println(state.getTrainerPokemon().getName() + " wins");
         }
+    }
+
+    // Prints status infliction message only when status actually changed
+    private void printStatusIfInflicted(Pokemon defenderBefore, Pokemon defenderAfter) {
+        if (defenderAfter.getStatus() != StatusCondition.NONE
+                && defenderAfter.getStatus() != defenderBefore.getStatus()) {
+            System.out.println("  " + defenderAfter.getName()
+                    + " was inflicted with " + defenderAfter.getStatus() + "!");
+        }
+    }
+
+    // Attempts to clear sleep/freeze before a Pokemon moves
+    private BattleState tryStatusRecovery(BattleState state, boolean isTrainerSide) {
+        Pokemon pokemon = isTrainerSide
+                ? state.getTrainerPokemon()
+                : state.getOpponentPokemon();
+
+        Pokemon recovered = tryWakeOrThaw(pokemon);
+
+        if (isTrainerSide) {
+            return new BattleState(recovered, state.getOpponentPokemon(),
+                    state.getTurnNumber(), state.isTrainersTurn());
+        } else {
+            return new BattleState(state.getTrainerPokemon(), recovered,
+                    state.getTurnNumber(), state.isTrainersTurn());
+        }
+    }
+
+    // Returns Pokemon with status cleared if wake/thaw roll succeeds
+    private Pokemon tryWakeOrThaw(Pokemon pokemon) {
+        return switch (pokemon.getStatus()) {
+            case SLEEP -> {
+                if (Math.random() < 0.33) {
+                    System.out.println("  " + pokemon.getName() + " woke up!");
+                    yield pokemon.applyStatusCondition(StatusCondition.NONE);
+                }
+                yield pokemon;
+            }
+            case FREEZE -> {
+                if (Math.random() < 0.20) {
+                    System.out.println("  " + pokemon.getName() + " thawed out!");
+                    yield pokemon.applyStatusCondition(StatusCondition.NONE);
+                }
+                yield pokemon;
+            }
+            default -> pokemon;
+        };
+    }
+
+    // Returns true if the Pokemon can act this turn
+    private boolean canMove(Pokemon pokemon) {
+        return switch (pokemon.getStatus()) {
+            case SLEEP, FREEZE -> false;
+            case PARALYZE      -> Math.random() >= 0.25;
+            case CONFUSION     -> Math.random() >= 0.50;
+            default            -> true;
+        };
+    }
+
+    private BattleState applyEndOfTurn(BattleState state) {
+        Pokemon updatedTrainer  = applyEOTEffects(state.getTrainerPokemon());
+        Pokemon updatedOpponent = applyEOTEffects(state.getOpponentPokemon());
+        return new BattleState(updatedTrainer, updatedOpponent,
+                state.getTurnNumber(), state.isTrainersTurn());
+    }
+
+    private Pokemon applyEOTEffects(Pokemon pokemon) {
+        int chip = switch (pokemon.getStatus()) {
+            case BURN   -> (int) Math.round(pokemon.getBaseStats().hp() / 16.0);
+            case POISON -> (int) Math.round(pokemon.getBaseStats().hp() / 8.0);
+            default     -> 0;
+        };
+        if (chip > 0) {
+            System.out.println("  " + pokemon.getName() + " is hurt by "
+                    + pokemon.getStatus().toString().toLowerCase() + "! (-" + chip + " HP)");
+        }
+        return pokemon.takeDamage(chip);
     }
 
     private boolean pokemonFainted(Pokemon trainer, Pokemon opponent) {

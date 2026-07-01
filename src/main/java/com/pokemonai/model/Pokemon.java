@@ -46,6 +46,8 @@ public class Pokemon {
         return new Pokemon(name, type1, type2, baseStats, (currentHP-amount), moveList, level, statStages, status);
     }
 
+    public StatusCondition getStatus() {return this.status; }
+
     public Pokemon applyStatusCondition(StatusCondition newStatus) {
         return new Pokemon(name, type1, type2, baseStats, currentHP, moveList, level, statStages, newStatus);
     }
